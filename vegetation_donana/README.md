@@ -25,7 +25,14 @@ More recently (since 2023), another project, led by Matthew Celments, started sh
 
 **Figure 2**. Distribution of shrub monitoring plots in the Biological Reserved in Doñana National Park.
 
-## Forecasting abudance change of shrubs
+## Forecasting abundance change of shrubs
+
+The main script is _wcs_donana.r_. There are 4 steps:
+
+1. We load a temporal series of the satellite-based spatial raster as well as the coordinates (converted into spatial points) from the center of the monitoring plots.
+2. We extract the value of the raster at a given point, and use it as a plot-specific covariate value
+3. We develop the statistical model to quantify shrub abundance as a function of the covariate.
+4. We do the forecast and assess skill.
 
 
 
