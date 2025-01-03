@@ -2,7 +2,7 @@
 
 **Workshop designers**: Billur Bektaş, Patrícia Singh, Mary E Lofton, Freya Olsson, Maria Paniw
 
-**Contributors**: María Teresa Mejia Sánchez, Matthew Clements
+**Contributors**: María Teresa Mejia Sánchez, Matthew Clements, Francisco Lloret
 
 ## Background
 
