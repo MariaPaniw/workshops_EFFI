@@ -40,6 +40,9 @@ There are 5 steps in the analysis:
 3. Use the script _main_analyses_donana.R_ to:
    
    3.1 Load the temporal series of the raster as well as the coordinates (converted into spatial points) from the center of the monitoring plots.
+   
    3.2 Extract the value of the raster at a given point, and use it as a plot-specific covariate value
+
    3.3 Develop the statistical model to quantify shrub abundance as a function of the covariate
+
    3.4 We do the forecast and assess skill
