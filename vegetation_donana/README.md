@@ -27,19 +27,19 @@ More recently (since 2023), another project, led by Matthew Celments, started sh
 
 ## Forecasting abundance change of shrubs
 
-The main script is _wcs_donana.r_. There are 4 steps:
-
-1. We load a temporal series of the satellite-based spatial raster as well as the coordinates (converted into spatial points) from the center of the monitoring plots.
-
-   The rasters we use are provided by the geospatial laboratory (LAST) at EBD CSIC:
+The rasters (30 by 30 m resolution) we use are provided by the geospatial laboratory (LAST) at EBD CSIC:
 
    Díaz-Delgado, R., Afan, I., Aragones, D., Garcia, D., & Bustamante, J. (2019). NDVIs Doñana 1984/2019 (v1.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.3518879
-   
-3. We extract the value of the raster at a given point, and use it as a plot-specific covariate value
-4. We develop the statistical model to quantify shrub abundance as a function of the covariate.
-5. We do the forecast and assess skill.
 
+There are 5 steps in the analysis:
 
+1. Download the NDVI data for the entire Doñana region from Zenodo to a local folder. 
 
-
+2. Use the script _process_ndvi.R_ to subset the raster files (which are pretty large) to the borders of the Doñana Biological Reserve and save in a local folder.
  
+3. Use the script _main_analyses_donana.R_ to:
+   
+   3.1 Load the temporal series of the raster as well as the coordinates (converted into spatial points) from the center of the monitoring plots.
+   3.2 Extract the value of the raster at a given point, and use it as a plot-specific covariate value
+   3.3 Develop the statistical model to quantify shrub abundance as a function of the covariate
+   3.4 We do the forecast and assess skill
