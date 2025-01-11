@@ -43,6 +43,8 @@ There are 5 steps in the analysis:
    
    3.2 Extract the value of the raster at a given point, and use it as a plot-specific covariate value
 
+   *Note*: You can skip the previous steps and load all the data (preprocessed by us) directly.
+
    3.3 Develop the statistical model to quantify shrub abundance as a function of the covariate
 
    3.4 We do the forecast and assess skill
