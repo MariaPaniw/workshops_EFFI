@@ -18,16 +18,44 @@ install_and_load_packages <- function(required_packages) {
 }
 
 # Example usage:
-required_packages <- required_packages <- c("tidyverse", 
-                                            "signal",
-                                            "zoo",
-                                            "lubridate",
-                                            "ggplot2",
-                                            "here",
-                                            "gtools",
-                                            "broom",
-                                            "FactoMineR",
-                                            "factoextra",
-                                            "ggrepel",
-                                            "ggpubr")
+required_packages <- c("tidyverse", 
+                       "signal",
+                       "zoo", 
+                       "lubridate",
+                       "ggplot2",
+                       "here",
+                       "gtools",
+                       "broom",
+                       "FactoMineR", 
+                       "factoextra",
+                       "ggrepel",
+                       "ggpubr",
+                       "terra",
+                       "readxl",
+                       "e1071",
+                       "DBI",
+                       "RSQLite", 
+                       "visNetwork",
+                       "sf",
+                       "devtools",
+                       "reticulate",
+                       "conflicted",
+                       "ranger",
+                       "mgcv",
+                       "plotly",
+                       "shiny",
+                       "ows4R",
+                       "jagsUI"
+                       
+)
 install_and_load_packages(required_packages)
+
+if(!"Rchelsa"%in%installed.packages()){
+  install_git("https://gitlabext.wsl.ch/karger/rchelsa.git")
+}else{cat("Rchelsa is already installed.")}
+library(Rchelsa)
+py_install("chelsa-cmip6", pip=T)
+chelsa_cmip6 <- import('chelsa_cmip6')
+
+conflict_prefer("filter", "dplyr")
+conflict_prefer("select", "dplyr")
