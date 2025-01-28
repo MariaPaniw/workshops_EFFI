@@ -14,7 +14,7 @@ df_ndvi <- read.csv(here("vegetation_donana","df.ndvi.csv"))
 df_ndvi$date <- as.Date(paste(df_ndvi$year, df_ndvi$month, df_ndvi$day, sep="-"))
 df_ndvi = df_ndvi[df_ndvi$year != 1984,] #Non complete year
 df_ndvi$ndvi[df_ndvi$ndvi == 255]<-NA #No data cases
-df_ndvi$ndvi <- (df_ndvi$ndvi / 100) - 1 # Transform from Byte to NDVI
+# df_ndvi$ndvi <- (df_ndvi$ndvi / 100) - 1 # Transform from Byte to NDVI
 hist(df_ndvi$ndvi) # Check if the NDVI values are within the -1 to 1 range
 
 cat("Cleaning, interpolating and smoothening the NDVI data per plot.", "\n")
