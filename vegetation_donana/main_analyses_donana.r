@@ -11,97 +11,12 @@ setwd("/Users/maria/Dropbox/collaborations/EEFI/workshop")
 
 ## The script has the following sections:
 
-# 1. Load the spatial data. I load the coordinates of the monitoring plots (and convert them into spatial points) and a series satellite-based NDVI raster data from a local drive 
-      # The rater data are available on GitHub, and will be made available via a WCS client (a separate script using a WCS client is avaiable on GitHub)
-# 2. Process the spatial data: I get the value of the raster at a given point to be used as a covariate to predict abundance change 
-# 3. Model abundance change. Here, I just use a simple autoregressive model done in JAGS
-# 4. Do the forecast and quantify forecast skill
-############### 
-#1. LOAD SPATIAL DATA
-
-### Load location of the study plots with abundance monitoring since 2007:
-### Reference system is WGS84
-# coords_long=read_csv(url("https://raw.githubusercontent.com/MariaPaniw/workshops_EFFI/refs/heads/main/vegetation_donana/coords_plot_since2007.csv?token=GHSAT0AAAAAAC2TAOO4TOA3HUOY7SYFFRE4Z3RUREQ"))
-
-coords_long <- read.csv("coords_plot_since2007.csv")
-
-crdref <- "+proj=longlat +datum=WGS84"
-pts_long <- vect(cbind(coords_long$Long,coords_long$Lat), atts=coords_long[,c("ID","Elevation")],crs=crdref)
-pts_long
-
-newcrs <- "+proj=utm +zone=29 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
-
-rob <- project(pts_long, newcrs)
-
-### Load location of the landscape plots (monitored since 2023):
-### Reference system is WGS84
-# ab_land=read_csv(url("https://raw.githubusercontent.com/MariaPaniw/workshops_EFFI/refs/heads/main/vegetation_donana/coordinates_2023_02.csv?token=GHSAT0AAAAAAC2TAOO4TOA3HUOY7SYFFRE4Z3RUREQ"))
-
-ab_land <- read.csv("coordinates_2023_02.csv")
-
-ab_land$ID <- factor(paste(ab_land$lon,ab_land$lat))
-
-levels(ab_land$ID) = 1:length(levels(ab_land$ID))
-
-ab_land <- droplevels(ab_land[ab_land$ID!=c("119","120"),])
-ab_land <- droplevels(ab_land[ab_land$ID!=c("119","120"),])
-
-coords_land <- ab_land[!duplicated(ab_land$ID),] 
-
-crdref <- "+proj=longlat +datum=WGS84"
-
-pts_land <- vect(cbind(coords_land$lon,coords_land$lat), atts=coords_land[,c("ID","week")],crs=crdref)
-pts_land
-
-newcrs <- "+proj=utm +zone=29 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs"
-
-rob_land <- project(pts_land, newcrs)
-
-### Load the NDVI maps 
-
-ndvi.names <- list.files("NDVI_mask_reserva_new", pattern="*.tif")
-
-# Only uncomment below if you have auxiliary files in the folder
-
-# ndvi.names <- ndvi.names[-which(stringr::str_detect(ndvi.names,'aux.xml')==T)]
+# 1. Load the spatial data obtained form process_ndvi.R 
+# 2. Model abundance change. Here, I just use a simple autoregressive model done in JAGS
+# 3. Do the forecast and quantify forecast skill
 
 ############### 
-#2. GET SPATIAL COVARIATE DATA AT POINT COORDINATES
-
-### go through maps OR load the data frame (that was processed before): 
-df.ndvi=NULL 
-
-df.ndvi_land=NULL 
-
-for(i in 1:length(ndvi.names)){
- 
-  print(paste("Running map ",i))
-  
-  cov_data <- raster(paste0("NDVI_mask_reserva_new/", ndvi.names[i]))
-  
-  year=substr(ndvi.names[i],6,9)
-  month=substr(ndvi.names[i],10,11)
-  day=substr(ndvi.names[i],12,13)
-  
-  #Get NDVI value for point coordinates
-  df.ndvi=rbind(df.ndvi,data.frame(plot=rob$ID,ndvi=extract(cov_data, st_as_sf(rob)),year,month,day))
-  df.ndvi_land=rbind(df.ndvi_land,data.frame(plot=rob_land$ID,ndvi=extract(cov_data, st_as_sf(rob_land)),year,month,day))
-  
-}
-
-# Check if everything ran well! 
-
-hist(df.ndvi$ndvi)
-
-unique(df.ndvi$year)
-unique(df.ndvi$month)
-unique(df.ndvi$day)
-
-# write.csv(df.ndvi,"df.ndvi.csv",row.names = F)
-
-# write.csv(df.ndvi_land,"df.ndvi_land.csv",row.names = F)
-
-# You can also load the values:
+#1. LOAD SPATIAL COVARIATE DATA AT POINT COORDINATES
 
 df.ndvi <- read.csv("df.ndvi.csv")
 df.ndvi_land <- read.csv("df.ndvi_land.csv")
@@ -157,6 +72,7 @@ df.ndvi.mu$cov <- df.ndvi.mu$ndvi
 # we focus on two very abundant shrubs with lots of data
 
 sub=num[num$species%in%c("Halimium halimifolium","Lavandula stoechas"),]
+
 
 
 ############### 
@@ -375,7 +291,6 @@ abline(1,1)
 
 out1$mean
 
-
 hist(out1$sims.list$a1.h)## Effect of NDVI is not signifcant (95% CI  crosses 0)
 hist(out1$sims.list$a1.l)## Effect of NDVI is signifcant (95% CI does not cross 0)
 
@@ -438,7 +353,9 @@ b=ggplot(df.pred,aes(year,N,group=sim))+
 
 b
 ############### 
-#4. FORECAST NEXT YEAR & NEW SPACE
+#4. FORECAST NEXT YEARS
+
+# Here we use the abudances for 2022 to predict to 2023 and 2024
 
 # Load shrub abundances at 18 study sites for 2023 and 2024
 num_fut =read.csv("shrub_number_2324.csv", sep=" ")
@@ -451,7 +368,293 @@ sub_fut <- num_fut[num_fut$species%in%c("Halimium halimifolium","Lavandula stoec
 
 # Predict NDVI based on weather (needs to be done)
 
+# !!!!! PLACEHOLDER: MEAN NDVI FOR 23/24
+
+n.years.pred=2 #predictions over 2 years
+
+ndvi.pred=array(NA,c(n.plots,n.years.pred))
+
+for(i in 1:n.plots){ # site loop
+  for(k in 1:n.years.pred){
+    
+    year=as.character(2022:2023)[k]
+    plot=unique(sub$plot)[i]
+   
+    cov= df.ndvi.mu$cov[df.ndvi.mu$plot%in%plot&df.ndvi.mu$year%in%year]
+
+    if(length(cov)>0)  ndvi.pred[i,k]=cov
+    
+  }
+  
+}
+
+## Sample 100 posterior values from 2100 ones (to speed up predictions)
+
+par.sub=sample(1:length(out1$sims.list$a0.h),1000)
+
+n.hal.pred=array(NA,c(length(par.sub),n.plots,n.years.pred)) #save predictions for Halimium 
+
+n.lav.pred=array(NA,c(length(par.sub),n.plots,n.years.pred)) #save predictions for Lavandula 
+
+### Forecast skill
+deviance.hal=array(NA,c(length(par.sub),n.plots,n.years.pred)) #save predictions for Lavandula 
+deviance.lav=array(NA,c(length(par.sub),n.plots,n.years.pred)) 
+
+for(x in 1:length(par.sub)){
+  
+  for(i in 1:n.plots) { # Loop over sites
+    
+    #Initial abundance (last year of data with which the model was fitted)
+    
+    N.h <- C.hal[i,ncol(C.hal)]
+    
+    N.l <- C.lav[i,ncol(C.hal)]
+    
+    
+    #Specify the model for years 2023 anbd 2024
+    
+    for(t in 1:n.years.pred) {
+      
+      
+      # Halimium halimifolium
+      
+      N.h <- exp(out1$sims.list$a0.h[par.sub[x]] + out1$sims.list$a1.h[par.sub[x]] *ndvi.pred[i,t]  + out1$sims.list$a2.h[par.sub[x]] * log(N.h+0.001)) 
+      
+      n.hal.pred[x,i,t] <-  rpois(1,N.h)
+      
+      ad.obs.hal=sub_fut$adults[sub_fut$species=="Halimium halimifolium"&sub_fut$year==unique(sub_fut$year)[t]&sub_fut$plot==unique(sub_fut$plot)[i]]
+      
+      if(n.hal.pred[x,i,t]>0&length(ad.obs.hal)>0){
+        
+        deviance.hal[x,i,t] = ( ad.obs.hal- n.hal.pred[x,i,t])^2
+        
+      }
+     
+       # Lavandula stoechas 
+      
+      N.l <- exp(out1$sims.list$a0.l[par.sub[x]] + out1$sims.list$a1.l[par.sub[x]] *ndvi.pred[i,t]  + out1$sims.list$a2.l[par.sub[x]] * log(N.l+0.001)) 
+      
+      n.lav.pred[x,i,t] <-  rpois(1,N.l)
+      
+      ad.obs.lav =sub_fut$adults[sub_fut$species=="Lavandula stoechas"&sub_fut$year==unique(sub_fut$year)[t]&sub_fut$plot==unique(sub_fut$plot)[i]]
+      if(n.lav.pred[x,i,t]>0&length(ad.obs.lav)>0){
+        
+        deviance.lav[x,i,t] = ( ad.obs.lav - n.lav.pred[x,i,t])^2
+        
+      }
+      
+     
+     
+    }
+    
+  }
+  
+}
 
 
+### Forecast skill as mean square error:
+
+MSE.Hal=apply(deviance.hal,c(1),sum,na.rm=T) # uncertainty due to posterior samples kept
+hist(MSE.Hal)
+
+MSE.Lav=apply(deviance.lav,c(1),sum,na.rm=T) # uncertainty due to posterior samples kept
+hist(MSE.Lav)
+
+### PLOTS
+### Prepare the data for plotting 
+
+n.hal.tot.pred=apply(n.hal.pred,c(1,3),sum)
+
+n.lav.tot.pred=apply(n.lav.pred,c(1,3),sum)
+
+## Halimuim
+df.pred=data.frame(N=as.numeric(n.hal.tot.pred),
+                   year=rep(c(2023:2024),each=dim(n.hal.tot.pred)[1]),
+                   sim=1:dim(n.hal.tot.pred)[1])
+
+hal.tot=aggregate(adults~year,data=sub_fut[sub_fut$species=="Halimium halimifolium",],function(x) sum(x,na.rm=T))
+hal.tot$sim=NA
+hal.tot$tot=hal.tot$adults
+hal.tot$year=as.numeric(as.character(hal.tot$year))
+
+a.pred=ggplot(df.pred,aes(year,N,group=sim))+
+  geom_line(alpha=0.1)+
+  geom_point(data=hal.tot, aes(year,tot),size=3,col="blue")+
+  # scale_color_viridis(discrete = T,option="A")+
+  xlab("Year")+ylab("Abundance")+theme_bw(base_size=20)+
+  theme(panel.grid = element_blank())+
+  ggtitle("Halimium halimifolium")+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "black"),
+        legend.position = "none",
+        legend.title = element_blank())+
+  scale_x_continuous(breaks=c(2023,2024))
+
+a.pred
+
+## Lavandula
+df.pred=data.frame(N=as.numeric(n.lav.tot.pred),
+                   year=rep(c(2023:2024),each=dim(n.lav.tot.pred)[1]),
+                   sim=1:dim(n.lav.tot.pred)[1])
+
+lav.tot=aggregate(adults~year,data=sub_fut[sub_fut$species=="Lavandula stoechas",],function(x) sum(x,na.rm=T))
+lav.tot$sim=NA
+lav.tot$tot=lav.tot$adults
+lav.tot$year=as.numeric(as.character(lav.tot$year))
+
+b.pred=ggplot(df.pred,aes(year,N,group=sim))+
+  geom_line(alpha=0.1)+
+  geom_point(data=lav.tot, aes(year,tot),size=3,col="blue")+
+  # scale_color_viridis(discrete = T,option="A")+
+  xlab("Year")+ylab("Abundance")+theme_bw(base_size=20)+
+  theme(panel.grid = element_blank())+
+  ggtitle("Lavandula stoechas")+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        strip.background = element_blank(),
+        panel.border = element_rect(colour = "black"),
+        legend.position = "none",
+        legend.title = element_blank())+
+  scale_x_continuous(breaks=c(2023,2024))
+
+b.pred
+
+############### 
+#4. FORECAST NEXT YEARS & TO NEXT SITES
+
+# Here we use the abudances for 2023 to predict to 2024 and 2025
+
+# Load shrub abundances at newly monitored > 100 sites for 2023 and 2024
+num_fut =read.csv("coordinates_2023_02.csv")
+
+colnames(num_fut)[3] <- c("adults")
+
+num_fut$ID <- factor(paste(num_fut$lon,num_fut$lat))
+
+levels(num_fut$ID) = 1:length(levels(num_fut$ID))
+
+num_fut <- droplevels(num_fut[num_fut$ID!=c("119","120"),])
+num_fut <- droplevels(num_fut[num_fut$ID!=c("119","120"),])
+
+sub_fut=num_fut
+
+n.plots=length(levels(sub_fut$ID))
+
+# Predict NDVI based on weather (needs to be done)
+
+# !!!!! PLACEHOLDER: MEAN NDVI FOR 23/24
+
+df.ndvi.mu <- aggregate(ndvi~plot+year,mean,data=df.ndvi_land)
+
+#add 1 to the year to match with the abundance data: 
+
+df.ndvi.mu$year = as.numeric(df.ndvi.mu$year)+lag
+
+# Set covariate (already scaled -1 to 1)
+
+df.ndvi.mu$cov <- df.ndvi.mu$ndvi
 
 
+n.years.pred=2 #predictions over 2 years
+
+ndvi.pred=array(NA,c(n.plots,n.years.pred))
+
+for(i in 1:n.plots){ # site loop
+  for(k in 1:n.years.pred){
+    
+    year=as.character(2023:2024)[k]
+    plot=unique(sub_fut$ID)[i]
+    
+    cov= df.ndvi.mu$cov[df.ndvi.mu$plot%in%plot&df.ndvi.mu$year%in%year]
+    
+    if(length(cov)>0)  ndvi.pred[i,k]=cov
+    
+  }
+  
+}
+
+## Sample 100 posterior values from 2100 ones (to speed up predictions)
+
+par.sub=sample(1:length(out1$sims.list$a0.h),100)
+
+n.hal.pred=array(NA,c(length(par.sub),n.plots,n.years.pred)) #save predictions for Halimium 
+
+n.lav.pred=array(NA,c(length(par.sub),n.plots,n.years.pred)) #save predictions for Lavandula 
+
+### Forecast skill (here only for 1 year, because we don't have data for 2025)
+deviance.hal=array(NA,c(length(par.sub),n.plots))  
+deviance.lav=array(NA,c(length(par.sub),n.plots)) 
+
+for(x in 1:length(par.sub)){
+  
+  for(i in 1:n.plots) { # Loop over sites
+    
+    #Initial abundance (last year of data with which the model was fitted)
+    
+    N.h <- num_fut$adults[num_fut$spp=="Halimium halimifolium"&num_fut$year==2023][i]
+    
+    N.l <- num_fut$adults[num_fut$spp=="Lavandula stoechas"&num_fut$year==2023][i]
+    
+    
+    
+    #Specify the model for years 2024 anbd 2025
+    
+    for(t in 1:n.years.pred) {
+      
+      
+      # Halimium halimifolium
+      
+      N.h <- exp(out1$sims.list$a0.h[par.sub[x]] + out1$sims.list$a1.h[par.sub[x]] *ndvi.pred[i,t]  + out1$sims.list$a2.h[par.sub[x]] * log(N.h+0.001)) 
+      
+      n.hal.pred[x,i,t] <-  rpois(1,N.h)
+      
+      if(t==1){ # for 2024 only 
+        
+        ad.obs.hal=sub_fut$adults[sub_fut$spp=="Halimium halimifolium"&sub_fut$year==unique(sub_fut$year)[2]&sub_fut$ID==unique(sub_fut$ID)[i]]
+        
+        if(n.hal.pred[x,i,t]>0&length(ad.obs.hal)>0){
+          
+          deviance.hal[x,i] = ( ad.obs.hal- n.hal.pred[x,i,t])^2
+          
+        }
+      }
+      
+      
+      # Lavandula stoechas 
+      
+      N.l <- exp(out1$sims.list$a0.l[par.sub[x]] + out1$sims.list$a1.l[par.sub[x]] *ndvi.pred[i,t]  + out1$sims.list$a2.l[par.sub[x]] * log(N.l+0.001)) 
+      
+      n.lav.pred[x,i,t] <-  rpois(1,N.l)
+      
+      if(t==1){ # for 2024 only 
+        
+        ad.obs.lav =sub_fut$adults[sub_fut$spp=="Lavandula stoechas"&sub_fut$year==unique(sub_fut$year)[2]&sub_fut$ID==unique(sub_fut$ID)[i]]
+        if(n.lav.pred[x,i,t]>0&length(ad.obs.lav)>0){
+          
+          deviance.lav[x,i] = ( ad.obs.lav - n.lav.pred[x,i,t])^2
+          
+        }
+        }
+    
+      
+      
+    }
+    
+  }
+  
+}
+
+
+### Forecast skill as mean square error:
+
+MSE.Hal=apply(deviance.hal,c(1),sum,na.rm=T) # uncertainty due to posterior samples kept
+hist(MSE.Hal)
+
+MSE.Lav=apply(deviance.lav,c(1),sum,na.rm=T) # uncertainty due to posterior samples kept
+hist(MSE.Lav)
+
+### PLOTS
+
+# Haven't done those
