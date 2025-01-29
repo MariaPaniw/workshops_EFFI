@@ -47,7 +47,7 @@ plot_significance <- all_processed_data %>%
 # Join significance information back to the data
 all_processed_data <- all_processed_data %>%
   left_join(plot_significance, by = "plot")
-
+saveRDS(all_processed_data, file = here("vegetation_donana", "ndvi_processed.rds"))
 cat("ndvi_trends_plots.pdf figure is created.", "\n")
 # Create plot with transparent non-significant trends
 pdf(file = here("vegetation_donana", "ndvi_trends_plots.pdf"), height = 12, width = 15)

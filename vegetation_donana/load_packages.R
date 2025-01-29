@@ -42,10 +42,16 @@ required_packages <- c("tidyverse",
                        "conflicted",
                        "ranger",
                        "mgcv",
-                       "plotly",
                        "shiny",
                        "ows4R",
-                       "jagsUI"
+                       "jagsUI",
+                       "bs4Dash",
+                       "shinythemes",
+                       "shinyjs",
+                       "shinycssloaders",
+                       "plotly",
+                       "colorspace"
+                       
                        
 )
 install_and_load_packages(required_packages)
@@ -59,3 +65,5 @@ chelsa_cmip6 <- import('chelsa_cmip6')
 
 conflict_prefer("filter", "dplyr")
 conflict_prefer("select", "dplyr")
+conflict_prefer("column", "bs4Dash")
+conflict_prefer("layout", "plotly")

@@ -124,3 +124,23 @@ saveRDS(ndvi_predictions, file = here("vegetation_donana", "ndvi_predictions.rds
   ndvi_predictions = readRDS(here("vegetation_donana", "ndvi_predictions.rds"))
 }
 
+# Create the figure for the shiny app
+ndvi_plot =
+ndvi_predictions %>%
+  select(metric, model, bioclim_vars, scenario, plot, year, predicted)%>%
+  rename(value = predicted)%>%
+  mutate(type = "predicted")%>%
+  bind_rows(
+    ndvi_data %>%
+      select(plot, year, integrated_ndvi, winter_spring_integrated, summer_integrated)%>%
+      pivot_longer(cols = integrated_ndvi:summer_integrated, 
+                   names_to = "metric", 
+                   values_to = "value")%>%
+      mutate(type = "observed",
+             scenario = "observed",
+             bioclim_vars = "observed",
+             model = "observed")
+    
+  )
+
+saveRDS(ndvi_plot, file = here("vegetation_donana", "ndvi_plot.rds"))
